@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Test Analysis Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+
+        /* Header Styles */
+        header {
+            background: #0906b0;
+            color: white;
+            padding: 0.5em 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        header .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1em;
+        }
+
+        header nav ul {
+            list-style: none;
+            display: flex;
+            gap: 1.5em;
+            margin: 0;
+            padding: 0;
+        }
+
+        header nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        header nav a:hover {
+            color: hsla(190, 89%, 63%, 0.926);
+        }
+
+        .disabled-link {
+            pointer-events: none;
+            color: rgb(167, 210, 235); /* Optional: Make it visually appear disabled */
+            text-decoration: none;
+        }
+
+        main {
+            padding: 20px;
+            max-width: 900px;
+            margin: 20px auto;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+
+        .highlight {
+            color: #d9534f;
+        }
+
+        .cost-summary {
+            font-weight: bold;
+        }
+
+        /* Footer Styles */
+        footer {
+            background-color: #222;
+            color: white;
+            text-align: center;
+            padding: 0.5em 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+        footer p {
+            margin: 0;
+        }
+
+        .download-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #0906b0;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            width: 200px;
+        }
+
+        .download-btn:hover {
+            background-color: #005bb5;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="journey.html">Patient Journey</a></li>
+                    <li><a href="report.html" style="text-decoration: underline;">Report</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <h1>
+        <center>📋 Medical Test Analysis Report</center>
+    </h1>
+    <main id="report-content">
+        <div class="section" style="position: relative;">
+            <h2>🎯 Main Health Problem</h2>
+            <p id="main-problem"></p>
+            <img src="images\\Loading4.gif" alt="Loading Animation" class="gif-image" id="main-problem-gif"
+                style="position: absolute; top: 0; right: 0;">
+        </div>
+
+        <div class="section" style="position: relative;">
+            <h2>❌ Unnecessary Tests</h2>
+            <ul id="unnecessary-tests"></ul>
+            <img src="images\\Loading4.gif" alt="Loading Animation" class="gif-image" id="unnecessary-tests-gif"
+                style="position: absolute; top: 0; right: 0;">
+        </div>
+
+        <div class="section" style="position: relative;">
+            <h2>💰 Potential Cost Savings</h2>
+            <p class="cost-summary">Total Unnecessary Test Costs: <span id="total-cost"></span></p>
+            <ul id="cost-breakdown"></ul>
+            <img src="images\\Loading4.gif" alt="Loading Animation" class="gif-image" id="cost-breakdown-gif"
+                style="position: absolute; top: 0; right: 0;">
+        </div>
+
+        <div class="section" style="position: relative;">
+            <h2>⚠️ Risk Assessment</h2>
+            <p>Overall Risk Score: <span id="risk-score"></span>%</p>
+            <ul id="risk-factors"></ul>
+            <img src="images\\Loading4.gif" alt="Loading Animation" class="gif-image" id="risk-factors-gif"
+                style="position: absolute; top: 0; right: 0;">
+        </div>
+
+        <div class="section" style="position: relative;">
+            <h2>📝 Summary and Recommendations</h2>
+            <p id="summary"></p>
+            <ul id="recommendations"></ul>
+            <img src="images\\Loading4.gif" alt="Loading Animation" class="gif-image" id="recommendations-gif"
+                style="position: absolute; top: 0; right: 0;">
+        </div>
+
+        <p id="timestamp"></p>
+        <a href="#" class="download-btn" id="download-report">Download Report</a>
+    </main>
+
+
+
+    <footer>
+
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.4.0/jspdf.umd.min.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', function () {
+            const validationLink = document.querySelector('a[href="validation.html"]');
+
+            if (localStorage.getItem('verify-stored')) {
+                validationLink.classList.remove('disabled-link');
+            }
+        });
+
+        const transformData = (completedata) => {
+            // Extract only the necessary data and transform it into the required structure
+            const reportData = {
+                relevanceData: {
+                    mainProblem: completedata.relevance_data.main_problem,
+                    irrelevant_tests: completedata.relevance_data.irrelevant_tests.map(test => ({
+                        ...test,
+                        cost: completedata.cost_data.itemized_costs.find(
+                            item => item.item === test.test_name
+                        )?.cost || 0
+                    }))
+                },
+                costData: {
+                    totalUnnecessaryCost: completedata.relevance_data.irrelevant_tests.reduce((total, test) => {
+                        const cost = completedata.cost_data.itemized_costs.find(
+                            item => item.item === test.test_name
+                        )?.cost || 0;
+                        return total + cost;
+                    }, 0)
+                },
+                fraud_analysis: {
+                    fraud_score: completedata.fraud_analysis.fraud_score,
+                    suspicious_items: completedata.fraud_analysis.suspicious_items,
+                    recommendations: completedata.fraud_analysis.recommendations
+                }
+            };
+
+            return reportData;
+        };
+
+        window.onload = function () {
+            try {
+                const localStorageKey = 'analyze-stored';
+                const storedData = localStorage.getItem(localStorageKey);
+
+                if (storedData) {
+                    const completedata = JSON.parse(storedData); // Parse stored JSON data
+                    const reportData = transformData(completedata);
+
+                    // Hide or remove the gifs once data is processed
+                    const gifs = document.querySelectorAll('.gif-image');
+                    gifs.forEach(gif => {
+                        gif.style.display = 'none'; // Hide the gif
+                    });
+
+                    // Populate the DOM with the transformed data
+                    document.getElementById("main-problem").textContent = reportData.relevanceData.mainProblem;
+
+                    const unnecessaryTests = reportData.relevanceData.irrelevant_tests;
+                    const unnecessaryTestsList = document.getElementById("unnecessary-tests");
+                    unnecessaryTests.forEach(test => {
+                        const li = document.createElement("li");
+                        li.innerHTML = `<strong>Test:</strong> ${test.test_name}<br><strong>Why Unnecessary:</strong> ${test.why_unnecessary}<br><strong>Alternative Consideration:</strong> ${test.potential_reason}`;
+                        unnecessaryTestsList.appendChild(li);
+                    });
+
+                    document.getElementById("total-cost").textContent = `$${reportData.costData.totalUnnecessaryCost.toFixed(2)}`;
+
+                    const costBreakdownList = document.getElementById("cost-breakdown");
+                    unnecessaryTests.forEach(test => {
+                        const li = document.createElement("li");
+                        li.textContent = `${test.test_name}: $${test.cost.toFixed(2)}`;
+                        costBreakdownList.appendChild(li);
+                    });
+
+                    document.getElementById("risk-score").textContent = reportData.fraud_analysis.fraud_score;
+
+                    const riskFactorsList = document.getElementById("risk-factors");
+                    reportData.fraud_analysis.suspicious_items.forEach(item => {
+                        const li = document.createElement("li");
+                        li.innerHTML = `<strong>Item:</strong> ${item.item}<br><strong>Concern:</strong> ${item.reason}<br><strong>Confidence:</strong> ${item.confidence}%`;
+                        riskFactorsList.appendChild(li);
+                    });
+
+                    const recommendationsList = document.getElementById("recommendations");
+                    reportData.fraud_analysis.recommendations.forEach(rec => {
+                        const li = document.createElement("li");
+                        li.textContent = rec;
+                        recommendationsList.appendChild(li);
+                    });
+
+                    document.getElementById("timestamp").textContent = `📅 Report generated: ${new Date().toLocaleString()}`;
+
+                    // Event listener for downloading the report
+                    document.getElementById("download-report").addEventListener("click", () => {
+                        const { jsPDF } = window.jspdf;
+                        const doc = new jsPDF();
+
+                        const content = document.getElementById("report-content").innerText;
+
+                        doc.text(content, 10, 10);
+                        doc.save("Medical_Test_Analysis_Report.pdf");
+                    });
+
+                } else {
+                    throw new Error('No data found in local storage for key: ' + localStorageKey);
+                }
+            } catch (error) {
+                console.error('Error loading data from local storage:', error);
+                document.getElementById('dashboard').innerHTML =
+                    '<p class="error-message">Error loading data. Please try again later.</p>';
+            }
+        };
+
+
+    </script>
+
+</body>
+
+</html>

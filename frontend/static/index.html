@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+        input[type="radio"]:checked {
+            background-color: #0906b0;
+            /* Blue fill */
+            border-color: black;
+        }
+
+        /* Style for radio buttons */
+        input[type="radio"] {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            width: 13px;
+            height: 13px;
+            border: 1px solid black;
+            /* Blue border */
+            border-radius: 50%;
+            /* Makes it circular */
+            outline: none;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+        }
+
+        .photo-container {
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .photo-container img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        .disabled-link {
+            pointer-events: none;
+            color: rgb(167, 210, 235);
+            /* Optional: Make it visually appear disabled */
+            text-decoration: none;
+        }
+
+        .file-input-group {
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+
+        .file-label {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #0906b0;
+            /* Blue color */
+            width: 30%;
+            /* Fixed width for alignment */
+        }
+
+        .file-input {
+            flex: 1;
+            width: 50%;
+            padding: 2px;
+            font-size: 1rem;
+            border: 2px solid #0906b0;
+            /* Blue border */
+            border-radius: 4px;
+            outline: none;
+            transition: border-color 0.3s ease-in-out;
+        }
+
+        .file-input:focus {
+            border-color: #06048a;
+            /* Slightly darker blue on focus */
+            box-shadow: 0 0 5px rgba(9, 6, 176, 0.5);
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <ul>
+                    <li><a href="index.html" style="text-decoration: underline;">Home</a></li>
+                    <li><a href="journey.html" class="disabled-link">Patient Journey</a></li>
+                    <li><a href="report.html" class="disabled-link">Report</a></li>
+                    <li><a href="validation.html" class="disabled-link">Validation</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <main>
+        <div class="main-container">
+            <!-- Left Sub-Div: Upload Section -->
+            <div class="sub-div left-div">
+                <div class="file-input-group">
+                    <label for="file1" class="file-label">Health Report</label>
+                    <input type="file" id="file1" name="file1" class="file-input">
+                </div>
+                <div class="file-input-group">
+                    <label for="file2" class="file-label">Policy Report&nbsp;</label>
+                    <input type="file" id="file2" name="file2" class="file-input">
+                </div>
+
+            </div>
+            <!-- Right Sub-Div: Radio Buttons Section -->
+            <div class="sub-div right-div">
+                <div>
+                    <input type="radio" id="option1" name="options" value="option1">
+                    <label for="option1" style="font-size: large;">Report Analysis</label>
+                </div>
+                <div>
+                    <input type="radio" id="option2" name="options" value="option2">
+                    <label for="option2" style="font-size: large;">Report Comparison</label>
+                </div>
+                <div class="submit-container">
+                    <button type="button" id="submitBtn"
+                        style="background-color: #0906b0; color: white;">Submit</button>
+                </div>
+
+            </div>
+        </div>
+        <div class="photo-container">
+            <img id="gifImage" src="images\\Healtcare1.gif" alt="Descriptive text for the GIF">
+        </div>
+
+    </main>
+    <footer>
+
+    </footer>
+
+    <script>
+        // Store the original alert method
+        const originalAlert = window.alert;
+
+        // Override the alert method
+        window.alert = function (message) {
+            // Switch back to the original Healthcare GIF if an alert occurs
+            const gifImage = document.getElementById('gifImage');
+            gifImage.src = 'images\\Healtcare1.gif';
+            gifImage.alt = 'Descriptive text for the GIF';
+
+            // Call the original alert to show the alert box
+            originalAlert(message);
+        };
+
+        document.getElementById('submitBtn').addEventListener('click', function () {
+            const gifImage = document.getElementById('gifImage');
+
+            // Change GIF to indicate processing
+            gifImage.src = 'images\\Loading6.gif'; // Replace with the path to the new GIF
+            gifImage.alt = 'Processing...'; // Update alt text for accessibility
+            gifImage.className = 'gif-image'; // Ensure the same class is retained
+            gifImage.id = 'gifImage'; // Ensure the same ID is retained
+        });
+
+        let filesUploaded = false; // Track if files are uploaded
+
+        async function uploadFiles() {
+            const file1 = document.getElementById('file1').files[0];
+            const file2 = document.getElementById('file2').files[0];
+            const formData = new FormData();
+
+            if (!file1 && !file2) {
+                alert('Please upload files before submitting.');
+                return false;
+            }
+
+            else if (file1 && file2) {
+                formData.append('medical_file', file1);
+                formData.append('policy_file', file2);
+            }
+
+            else if (file1 && !file2) {
+                formData.append('medical_file', file1);
+                // formData.append('policy_file', file2);
+            }
+
+            else if (!file1 && file2) {
+                // formData.append('medical_file', file1);
+                formData.append('policy_file', file2);
+            }
+
+            try {
+                const response = await fetch('http://127.0.0.1:8080/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (response.ok) {
+                    filesUploaded = true; // Mark files as uploaded
+                    // alert('Files uploaded successfully!');
+                    return true;
+                } else {
+                    alert('Failed to upload files. Please try again.');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error uploading files:', error);
+                alert('An error occurred while uploading files.');
+                return false;
+            }
+        }
+
+        async function verifyStored() {
+            try {
+                const response = await fetch('http://127.0.0.1:8080/verify-stored', {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    const responseData = await response.json();
+                    // Save the response in local storage
+                    localStorage.setItem('verify-stored', JSON.stringify(responseData));
+                    return true;
+                } else {
+                    alert('Failed to verify stored files.');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error during verify-stored API call:', error);
+                alert('An error occurred during verification.');
+                return false;
+            }
+        }
+
+        async function analyzeStored() {
+            try {
+                const response = await fetch('http://127.0.0.1:8080/analyze-stored', {
+                    method: 'POST'
+                });
+
+                if (response.ok) {
+                    const responseData = await response.json();
+                    localStorage.setItem('analyze-stored', JSON.stringify(responseData));
+                    return true;
+                } else {
+                    alert('Failed to analyze stored files.');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error during analyze-stored API call:', error);
+                alert('An error occurred during analysis.');
+                return false;
+            }
+        }
+
+        async function predictDays() {
+            try {
+                const response = await fetch('http://127.0.0.1:8080/predict-days', {
+                    method: 'GET'
+                });
+
+                if (response.ok) {
+                    const responseData = await response.json();
+                    localStorage.setItem('predict-days', JSON.stringify(responseData));
+                    localStorage.removeItem('reviewed');
+                    return true;
+                } else {
+                    alert('Failed to predict days.');
+                    return false;
+                }
+            } catch (error) {
+                console.error('Error during predict-days API call:', error);
+                alert('An error occurred during prediction.');
+                return false;
+            }
+        }
+
+        document.getElementById('submitBtn').addEventListener('click', async function () {
+            // 🧹 Clean up localStorage entries before doing anything else
+            const keysToRemove = ['verify-stored', 'analyze-stored', 'predict-days', 'reviewed'];
+            keysToRemove.forEach(key => localStorage.removeItem(key));
+
+            // Get file input elements
+            const file1 = document.getElementById('file1').value;
+            const file2 = document.getElementById('file2').value;
+            // Check if a radio button is selected
+            const selectedOption = document.querySelector('input[name="options"]:checked');
+
+            if (!selectedOption) {
+                alert('Please select an option before submitting.');
+                return;
+            }
+
+            if (!filesUploaded) {
+                const uploadSuccess = await uploadFiles(); // Attempt to upload files if not already done
+                if (!uploadSuccess) return; // Exit if upload fails
+            }
+
+            if (selectedOption.value === 'option2') { // Check if Report Comparison is selected
+                if (!file1 && !file2) {
+                    alert('Upload the files');
+                } else if (!file1) {
+                    alert('File1: Health Pdf is missing');
+                } else if (!file2) {
+                    alert('File2: Policy Pdf is missing');
+                } else {
+                    const verificationSuccess = await verifyStored(); // Call the verify-stored API
+                    if (!verificationSuccess) return; // Exit if verification fails
+                    
+                    window.location.href = 'validation.html';
+                }
+            } else if (selectedOption.value === 'option1') { // Check for Report Analysis
+                if (!file1) {
+                    alert('File1: Health Pdf is missing');
+                } else {
+                    const analyzeSuccess = await analyzeStored(); // Call the analyze-stored API
+                    if (!analyzeSuccess) return;
+
+                    const predictSuccess = await predictDays(); // Call the predict-days API
+                    if (!predictSuccess) return;
+                    window.location.href = 'journey.html';
+                }
+            }
+        });
+
+        document.getElementById('uploadBtn').addEventListener('click', uploadFiles);
+    </script>
+</body>
+
+</html>

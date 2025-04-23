@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Patient Medical Data Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Styles */
+        header {
+            background: #0906b0;
+            color: white;
+            padding: 0.5em 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        header .container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1em;
+        }
+
+        header nav ul {
+            list-style: none;
+            display: flex;
+            gap: 1.5em;
+            margin: 0;
+            padding: 0;
+        }
+
+        header nav a {
+            color: white;
+            text-decoration: none;
+            font-weight: bold;
+            transition: color 0.3s ease;
+        }
+
+        header nav a:hover {
+            color: hsla(190, 89%, 63%, 0.926);
+        }
+
+        .disabled-link {
+            pointer-events: none;
+            color: rgb(167, 210, 235);
+            /* Optional: Make it visually appear disabled */
+            text-decoration: none;
+        }
+
+
+        /* Main Content Styles */
+        .dashboard-content {
+            flex: 1;
+            padding: 10px 20px;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 10px;
+            flex-shrink: 0;
+        }
+
+        .main-container {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 15px;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .charts-container {
+            display: grid;
+            grid-template-rows: 1fr 1fr;
+            gap: 15px;
+            min-height: 0;
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-rows: auto 1fr;
+            gap: 15px;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .chart-wrapper {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            position: relative;
+            min-height: 0;
+        }
+
+
+        .chart-wrapper .chart-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .chart-wrapper .chart-button:hover {
+            background: #0056b3;
+        }
+
+        .summary {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            flex-shrink: 0;
+        }
+
+        .summary-item {
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .summary-item h3 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .summary-item p {
+            margin: 0;
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .test-stats {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            min-height: 0;
+        }
+
+        .test-stats-content {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 5px;
+        }
+
+        .test-stat-item {
+            background: white;
+            margin-bottom: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .test-stat-item h4 {
+            margin: 0 0 5px 0;
+            color: #444;
+        }
+
+        .test-stat-item p {
+            margin: 0;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .urgent {
+            border-left: 4px solid #ff4444;
+        }
+
+        .routine {
+            border-left: 4px solid #4444ff;
+        }
+
+        /* Footer Styles */
+        footer {
+            background-color: #222;
+            color: white;
+            text-align: center;
+            padding: 0.5em 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+
+
+        footer p {
+            margin: 0;
+        }
+
+        /* Scrollbar Styles */
+        .test-stats-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .test-stats-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .test-stats-content::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+
+        .test-stats-content::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .close-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: #333;
+        }
+
+        .close-icon:hover {
+            color: red;
+        }
+
+        .popup h3 {
+            margin-top: 0;
+        }
+
+        .popup .popup-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+
+        .tick:hover,
+        .cross:hover {
+            color: #007bff;
+            /* Change color when hovering over the tick or cross */
+        }
+
+        #popupOverlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+
+        #popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            z-index: 2;
+            border-radius: 8px;
+            width: 400px;
+        }
+
+        .tick,
+        .cross {
+            cursor: pointer;
+            margin-left: 10px;
+        }
+
+        .tick {
+            color: green;
+        }
+
+        .cross {
+            color: red;
+        }
+
+        .highlight {
+            background-color: lightyellow;
+        }
+
+        #feedbackBox {
+            width: 100%;
+            padding: 10px;
+            margin-top: 10px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+
+        .chart-dropdown {
+            padding: 5px 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background: #fff;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="journey.html" style="text-decoration: underline;">Patient Journey</a></li>
+                    <li><a href="report.html">Report</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div class="dashboard-content">
+        <div class="main-container">
+            <div class="charts-container">
+                <div class="chart-wrapper" style="position: relative;">
+                    <canvas id="testsChart" style="position: absolute; top: 0; left: 0;"></canvas>
+                    <img src="images\\Loading4.gif" alt="Loading Animation" class="gif-image"
+                        style="padding-left: 40%; padding-top: 10%; position: absolute; top: 0; left: 0;">
+                    <div
+                        style="display: flex; justify-content: space-between; align-items: center; position: absolute; top: 10px; left: 10px; right: 10px;">
+                        <div id="dropdown-dates" class="dropdown-dates">
+                            <select id="dateSelector" class="chart-dropdown" multiple>
+
+                                <!-- Options will be dynamically populated -->
+                            </select>
+                        </div>
+                        <button class="chart-button" onclick="openPopup()">Review</button>
+                    </div>
+                </div>
+
+
+                <div class="chart-wrapper" style="position: relative;">
+                    <canvas id="conditionChart" style="position: absolute; top: 0; left: 0;"
+                        onclick="showChartDetails('conditionChart')"></canvas>
+                    <img src="images\\Loading4.gif" alt="Loading Animation" class="gif-image"
+                        style="padding-left: 40%; padding-top: 10%; position: absolute; top: 0; left: 0;">
+                </div>
+            </div>
+            <div class="stats-container">
+                <div class="summary">
+                    <div class="summary-item">
+                        <h3>Initial Condition</h3>
+                        <p id="initialCondition">Loading...</p>
+                    </div>
+                    <div class="summary-item">
+                        <h3>Risk Level</h3>
+                        <p id="riskLevel">Loading...</p>
+                    </div>
+                    <div class="summary-item">
+                        <h3>Final Condition</h3>
+                        <p id="finalCondition">Loading...</p>
+                    </div>
+                </div>
+                <div class="test-stats" style="position: relative;">
+                    <div class="test-stats-content" id="testStatsList"></div>
+                    <img src="images\\Loading4.gif" alt="Loading Animation" class="gif-image"
+                        style="padding-left: 40%; padding-top: 25%; position: absolute; top: 0; left: 0;">
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <!-- Popup and Overlay -->
+    <div class="popup-overlay" id="popupOverlay" onclick="closePopup()"></div>
+    <div class="popup" id="popup">
+        <button onclick="closePopup()" class="close-icon">&times;</button>
+        <h3>Test Details</h3>
+        <p id="popupContent">Loading...</p>
+        <div class="popup-controls">
+            <button id="prevButton" onclick="prevTest()">Previous</button>
+            <button id="nextButton" onclick="nextTest()">Next</button>
+            <button id="submitButton" style="display:none;" onclick="submitTests()">Submit</button>
+
+        </div>
+    </div>
+
+    <div>
+        <br> <br>
+    </div>
+    <footer>
+
+    </footer>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', function () {
+            const validationLink = document.querySelector('a[href="validation.html"]');
+
+            if (localStorage.getItem('verify-stored')) {
+                validationLink.classList.remove('disabled-link');
+            }
+        });
+
+        let testsChartInstance; // Store the chart instance globally
+        let currentTestIndex = 0;
+        window.onload = function () {
+            try {
+                const localStorageKey = 'predict-days';
+                const storedData = localStorage.getItem(localStorageKey);
+
+                if (storedData) {
+                    const medicalData = JSON.parse(storedData); // Parse the stored JSON data
+                    const processedData = processMedicalData(medicalData);
+                    populateDateDropdown(processedData.dates); // Populate the dropdown
+                    createConditionChart(processedData.dates, processedData.conditions);
+                    createTestsChart(
+                        processedData.dates,
+                        processedData.necessaryTests,
+                        processedData.unnecessaryTests
+                    );
+
+                    // Remove the GIF images after processing the data
+                    const gifImages = document.querySelectorAll('.gif-image');
+                    gifImages.forEach(gif => {
+                        gif.style.display = 'none'; // Hide the GIFs
+                    });
+                } else {
+                    throw new Error('No data found in local storage for key: ' + localStorageKey);
+                }
+            } catch (error) {
+                console.error('Error loading data from local storage:', error);
+                document.getElementById('dashboard').innerHTML =
+                    '<p class="error-message">Error loading data. Please try again later.</p>';
+            }
+        };
+
+        function populateDateDropdown(dates) {
+            const dateSelector = document.getElementById('dateSelector');
+            dateSelector.innerHTML = ''; // Clear existing options
+
+            // Add "All Dates" option
+            const allDatesOption = document.createElement('option');
+            allDatesOption.value = 'all';
+            allDatesOption.textContent = 'All Dates';
+            allDatesOption.selected = true; // Select "All Dates" by default
+            dateSelector.appendChild(allDatesOption);
+
+            // Add options for each date
+            dates.forEach(date => {
+                const option = document.createElement('option');
+                option.value = date;
+                option.textContent = date;
+                dateSelector.appendChild(option);
+            });
+
+            // Add event listener for filtering
+            dateSelector.addEventListener('change', () => {
+                const selectedOptions = Array.from(dateSelector.selectedOptions).map(option => option.value);
+                filterGraphByDates(selectedOptions);
+            });
+        }
+
+
+        function filterGraphByDates(selectedDates) {
+            if (!testsChartInstance) return; // Ensure the chart instance exists
+
+            if (selectedDates.includes('all')) {
+                // Show all data if "All Dates" is selected
+                testsChartInstance.data.labels = processedData.dates;
+                testsChartInstance.data.datasets[0].data = processedData.necessaryTests.map(tests => tests.length);
+                testsChartInstance.data.datasets[1].data = processedData.unnecessaryTests.map(tests => tests.length);
+            } else {
+                // Filter data for the selected dates
+                const filteredDates = [];
+                const filteredNecessaryTests = [];
+                const filteredUnnecessaryTests = [];
+
+                selectedDates.forEach(date => {
+                    const dateIndex = processedData.dates.indexOf(date);
+                    if (dateIndex !== -1) {
+                        filteredDates.push(date);
+                        filteredNecessaryTests.push(processedData.necessaryTests[dateIndex].length);
+                        filteredUnnecessaryTests.push(processedData.unnecessaryTests[dateIndex].length);
+                    }
+                });
+
+                testsChartInstance.data.labels = filteredDates;
+                testsChartInstance.data.datasets[0].data = filteredNecessaryTests;
+                testsChartInstance.data.datasets[1].data = filteredUnnecessaryTests;
+            }
+
+            // Update the chart to reflect changes
+            testsChartInstance.update();
+        }
+
+
+        function toggleTestStatus(event, isNecessary) {
+            const icon = event.target;
+            const testItem = icon.parentElement;
+            const testNameWithSymbols = testItem.textContent.trim();
+
+            // Extract the actual test name by removing the symbols (✓ and ✕)
+            const testName = testNameWithSymbols.replace(/[✓✕]/g, '').trim();
+
+            let reviewedData = JSON.parse(localStorage.getItem('reviewed')) || [];
+
+            if (reviewedData.length > 0) {
+                // If reviewed data exists, update it
+                const testIndex = reviewedData.findIndex((data) => data.date === processedData.dates[currentTestIndex]);
+                if (testIndex !== -1) {
+                    if (isNecessary) {
+                        // Move to unnecessary
+                        reviewedData[testIndex].relevantTests = reviewedData[testIndex].relevantTests.filter(test => test !== testName);
+                        reviewedData[testIndex].irrelevantTests.push(testName);
+                    } else {
+                        // Move to necessary
+                        reviewedData[testIndex].irrelevantTests = reviewedData[testIndex].irrelevantTests.filter(test => test !== testName);
+                        reviewedData[testIndex].relevantTests.push(testName);
+                    }
+                    // Update localStorage with the new data
+                    localStorage.setItem('reviewed', JSON.stringify(reviewedData));
+                }
+            } else {
+                // If no reviewed data, update the original processedData directly
+                const index = processedData.dates.indexOf(processedData.dates[currentTestIndex]);
+                if (isNecessary) {
+                    processedData.necessaryTests[index] = processedData.necessaryTests[index].filter(test => test !== testName);
+                    processedData.unnecessaryTests[index].push(testName);
+                } else {
+                    processedData.unnecessaryTests[index] = processedData.unnecessaryTests[index].filter(test => test !== testName);
+                    processedData.necessaryTests[index].push(testName);
+                }
+            }
+
+            // Refresh the popup content to reflect the changes
+            updatePopupContent();
+        }
+
+        function openPopup() {
+            const overlay = document.getElementById('popupOverlay');
+            const popup = document.getElementById('popup');
+
+            // Get reviewed data from localStorage if available
+            const reviewedData = JSON.parse(localStorage.getItem('reviewed'));
+
+            // If reviewedData exists, use it, otherwise use processedData
+            if (reviewedData) {
+                const currentReviewedData = reviewedData[currentTestIndex];
+                // Update the popup content based on the reviewed data
+                updatePopupContent(reviewedData, true);
+            } else {
+                // If no reviewed data, use the original processedData
+                updatePopupContent(processedData, false);
+            }
+
+            overlay.style.display = 'block';
+            popup.style.display = 'block';
+
+            updateButtonVisibility();
+        }
+
+        function nextTest() {
+            if (currentTestIndex < processedData.dates.length - 1) {
+                currentTestIndex++;
+                openPopup();
+            }
+            updateButtonVisibility();
+        }
+
+        function prevTest() {
+            if (currentTestIndex > 0) {
+                currentTestIndex--;
+                openPopup();
+            }
+            updateButtonVisibility();
+        }
+
+        function updateButtonVisibility() {
+            const prevButton = document.getElementById('prevButton');
+            const nextButton = document.getElementById('nextButton');
+            const submitButton = document.getElementById('submitButton');
+
+            // Show/hide the buttons based on the current index
+            if (currentTestIndex === 0) {
+                prevButton.style.display = 'none'; // Hide Previous button on the first test
+            } else {
+                prevButton.style.display = 'inline'; // Show Previous button on other tests
+            }
+
+            if (currentTestIndex === processedData.dates.length - 1) {
+                nextButton.style.display = 'none'; // Hide Next button on the last test
+                submitButton.style.display = 'inline'; // Show Submit button on the last test
+            } else {
+                nextButton.style.display = 'inline'; // Show Next button on other tests
+                submitButton.style.display = 'none'; // Hide Submit button on other tests
+            }
+        }
+
+
+        // Process medical data to get test names
+
+        function processMedicalData(data) {
+            const dailyData = data.daywise_predictions.daywise_predictions.daily_predictions;
+            const overallProgression = data.daywise_predictions.daywise_predictions.overall_progression;
+
+            // Update summary information
+            document.getElementById('initialCondition').textContent = overallProgression.starting_condition;
+            document.getElementById('riskLevel').textContent = overallProgression.risk_level;
+            document.getElementById('finalCondition').textContent = overallProgression.final_condition;
+
+            // Process test statistics
+            const testStatsList = document.getElementById('testStatsList');
+            dailyData.forEach(day => {
+                day.tests_conducted.forEach(test => {
+                    const testDiv = document.createElement('div');
+                    testDiv.className = `test-stat-item ${test.urgency.toLowerCase()}`;
+                    testDiv.innerHTML = `
+                <h4>${test.test_name}</h4>
+                <p><strong>Date:</strong> ${day.day}</p>
+                <p><strong>Urgency:</strong> ${test.urgency}</p>
+                <p><strong>Impact:</strong> ${test.impact}</p>
+            `;
+                    testStatsList.appendChild(testDiv);
+                });
+            });
+
+            // Process data for charts
+            const dates = dailyData.map(day => day.day);
+            const conditions = dailyData.map(day => {
+                switch (day.predicted_condition.toLowerCase()) {
+                    case 'bad': return 1;
+                    case 'neutral': return 2;
+                    case 'good': return 3;
+                    default: return 2;
+                }
+            });
+
+            // Get test names instead of counts
+            const necessaryTests = dailyData.map(day =>
+                day.tests_conducted
+                    .filter(test => test.required)
+                    .map(test => test.test_name)
+            );
+            const unnecessaryTests = dailyData.map(day =>
+                day.tests_conducted
+                    .filter(test => !test.required)
+                    .map(test => test.test_name)
+            );
+
+            // Store processed data in the global scope for use in the popup
+            processedData = { dates, necessaryTests, unnecessaryTests };
+
+            return {
+                dates,
+                conditions,
+                necessaryTests,
+                unnecessaryTests
+            };
+        }
+
+
+        function showChartDetails(chartId, event) {
+            // Get chart instance
+            const chart = Chart.getChart(chartId);
+            if (!chart) return;
+
+            // Get click coordinates relative to chart
+            const points = chart.getElementsAtEventForMode(
+                event,
+                "nearest",
+                { intersect: true },
+                true
+            );
+            if (!points.length) return;
+
+            const clickedIndex = points[0].index; // Get index of clicked bar in displayed data
+            const displayedDate = chart.data.labels[clickedIndex]; // Use displayed labels to get the date
+
+            // Fetch data for the clicked date
+            const originalIndex = processedData.dates.indexOf(displayedDate); // Match the displayed date with original dates
+
+            if (originalIndex === -1) return; // If the date isn't found in the original dataset, exit
+
+            // Set the current test index to the original index of the selected date
+            currentTestIndex = originalIndex;
+
+            const overlay = document.getElementById("popupOverlay");
+            const popup = document.getElementById("popup");
+
+            // Update popup content based on the selected date
+            updatePopupContent(displayedDate);
+
+            overlay.style.display = "block";
+            popup.style.display = "block";
+            updateButtonVisibility();
+        }
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const testsCanvas = document.getElementById("testsChart");
+            const conditionCanvas = document.getElementById("conditionChart");
+
+            testsCanvas.onclick = (e) => showChartDetails("testsChart", e);
+            conditionCanvas.onclick = (e) => showChartDetails("conditionChart", e);
+        });
+
+        //
+
+        function updatePopupContent() {
+            const content = document.getElementById('popupContent');
+            const date = processedData.dates[currentTestIndex];
+            console.log(currentTestIndex);
+
+            // Retrieve reviewed data from localStorage, if available
+            const reviewedData = JSON.parse(localStorage.getItem('reviewed')) || [];
+
+            // Find the reviewed data for the current date, if exists
+            const reviewedEntry = reviewedData.find(item => item.date === date);
+
+            // Initialize necessary and unnecessary tests based on reviewed data or processed data
+            let necessaryTests = [];
+            let unnecessaryTests = [];
+            let feedback = reviewedEntry ? reviewedEntry.feedback : '';
+
+            if (reviewedEntry) {
+                // If reviewed data exists, use that
+                necessaryTests = reviewedEntry.relevantTests || [];
+                unnecessaryTests = reviewedEntry.irrelevantTests || [];
+            } else {
+                // Otherwise, use the processed data
+                necessaryTests = processedData.necessaryTests[currentTestIndex] || [];
+                unnecessaryTests = processedData.unnecessaryTests[currentTestIndex] || [];
+            }
+
+            // Update the popup content dynamically
+            content.innerHTML = ` 
+    <strong>Date:</strong> ${date}<br><br> 
+    <strong>Necessary Tests:</strong><ul>${necessaryTests.map(test => `
+        <li>
+            ${test}
+            <span class="cross" title="Move to Un-Necessary" onclick="toggleTestStatus(event, true)">&#10005;</span>
+        </li>
+    `).join('')}</ul><br>
+    <strong>Unnecessary Tests:</strong><ul>${unnecessaryTests.map(test => `
+        <li>
+            ${test}
+            <span class="tick" title="Move to Necessary" onclick="toggleTestStatus(event, false)">&#10003;</span>
+        </li>
+    `).join('')}</ul><br>
+
+    <strong>Feedback:</strong><br>
+    <textarea id="feedbackTextBox" rows="4" cols="50">${feedback}</textarea><br><br>
+    <button onclick="submitFeedback()">Submit Feedback</button>
+    `;
+        }
+
+        function submitFeedback() {
+            const feedbackText = document.getElementById('feedbackTextBox').value;
+            const reviewedData = JSON.parse(localStorage.getItem('reviewed')) || [];
+
+            const currentDate = processedData.dates[currentTestIndex];
+            const reviewedEntry = reviewedData.find(item => item.date === currentDate);
+
+            if (reviewedEntry) {
+                // If entry exists, update the feedback for the current date
+                reviewedEntry.feedback = feedbackText;
+            } else {
+                // If no entry exists, create a new one with feedback
+                reviewedData.push({
+                    date: currentDate,
+                    relevantTests: processedData.necessaryTests[currentTestIndex],
+                    irrelevantTests: processedData.unnecessaryTests[currentTestIndex],
+                    feedback: feedbackText
+                });
+            }
+
+            // Update the 'reviewed' data in localStorage
+            localStorage.setItem('reviewed', JSON.stringify(reviewedData));
+
+            // // Notify the user and refresh the popup content
+            // alert('Feedback submitted!');
+            document.body.insertAdjacentHTML('beforeend', '<div id="message" style="position:fixed; top:10px; left:50%; transform:translateX(-50%); background-color:#4CAF50; color:white; padding:10px; border-radius:5px; z-index:9999;">Feedback submitted!</div>');
+            setTimeout(() => document.getElementById('message').remove(), 3000);
+
+            updatePopupContent();
+        }
+
+        function submitTests() {
+            // Get the existing 'reviewed' data from localStorage, or initialize an empty array if it doesn't exist
+            const existingReviewedData = JSON.parse(localStorage.getItem('reviewed')) || [];
+
+            const updatedReviewedData = processedData.dates.map((date, index) => {
+                let currentReviewedEntry = existingReviewedData.find(item => item.date === date);
+
+                if (!currentReviewedEntry) {
+                    // If no existing entry, create a new one
+                    currentReviewedEntry = {
+                        date: date,
+                        relevantTests: processedData.necessaryTests[index],
+                        irrelevantTests: processedData.unnecessaryTests[index],
+                        feedback: '' // Initialize empty feedback
+                    };
+                    existingReviewedData.push(currentReviewedEntry); // Add it to the array
+                }
+
+                return currentReviewedEntry;
+            });
+
+            // Update 'reviewed' data in localStorage
+            localStorage.setItem('reviewed', JSON.stringify(existingReviewedData));
+            fetchAndSortData();
+
+            // Notify the user and reload the page
+            // alert('Your Review has been considered.');
+            // location.reload();
+            document.body.insertAdjacentHTML('beforeend', '<div id="message" style="position:fixed; top:10px; left:50%; transform:translateX(-50%); background-color:#4CAF50; color:white; padding:10px; border-radius:5px; z-index:9999;">submitted!</div>');
+
+            // Remove the message after 3 seconds and then reload the page
+            setTimeout(() => {
+                document.getElementById('message').remove();
+                location.reload();
+            }, 1000);
+
+
+        }
+
+
+        function fetchAndSortData() {
+            // Fetch data from local storage
+            const data = JSON.parse(localStorage.getItem('reviewed')) || [];
+
+            // Sort the data by date in ascending order
+            const sortedData = data.sort((a, b) => {
+                const dateA = new Date(a.date.split('-').reverse().join('-'));
+                const dateB = new Date(b.date.split('-').reverse().join('-'));
+                return dateA - dateB;
+            });
+
+            // Store the sorted data back into local storage
+            localStorage.setItem('reviewed', JSON.stringify(sortedData));
+
+            // Optionally, return the sorted data if you want to use it immediately
+            return sortedData;
+        }
+
+        function closePopup() {
+            // Show a confirmation dialog before closing the popup
+            const userConfirmed = confirm('Do you want to submit?');
+
+            if (userConfirmed) {
+                // If the user clicks "Yes", call the submit function
+                submitTests();
+            } else {
+                // If the user clicks "No", just close the popup
+                const overlay = document.getElementById('popupOverlay');
+                const popup = document.getElementById('popup');
+                overlay.style.display = 'none';
+                popup.style.display = 'none';
+            }
+        }
+
+        // Function to create the condition progression chart
+        function createConditionChart(dates, conditions) {
+            const ctx = document.getElementById('conditionChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: dates,
+                    datasets: [{
+                        label: 'Patient Condition',
+                        data: conditions,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1,
+                        fill: false
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 4,
+                            ticks: {
+                                callback: function (value) {
+                                    return ['', 'Bad', 'Neutral', 'Good'][value];
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Patient Condition Progression'
+                        }
+                    }
+                }
+            });
+        }
+
+        function createTestsChart(dates, necessaryTests, unnecessaryTests) {
+            const ctx = document.getElementById('testsChart').getContext('2d');
+
+            // Check if the 'reviewed' key exists in localStorage
+            const reviewedData = JSON.parse(localStorage.getItem('reviewed'));
+
+            if (reviewedData) {
+
+                // Prepare datasets for reviewed data if available
+                const necessaryTestsData = dates.map((date, index) => ({
+                    x: date,
+                    y: necessaryTests[index].length,
+                    tests: necessaryTests[index],
+                }));
+
+                const unnecessaryTestsData = dates.map((date, index) => ({
+                    x: date,
+                    y: unnecessaryTests[index].length,
+                    tests: unnecessaryTests[index],
+                }));
+
+                const reviewedNecessaryTestsData = reviewedData
+                    ? dates.map((date) => {
+                        const reviewedTests = reviewedData.find(item => item.date === date)?.relevantTests || [];
+                        return {
+                            x: date,
+                            y: reviewedTests.length,
+                            tests: reviewedTests,
+                        };
+                    })
+                    : [];
+
+                const reviewedUnnecessaryTestsData = reviewedData
+                    ? dates.map((date) => {
+                        const reviewedTests = reviewedData.find(item => item.date === date)?.irrelevantTests || [];
+                        return {
+                            x: date,
+                            y: reviewedTests.length,
+                            tests: reviewedTests,
+                        };
+                    })
+                    : [];
+
+                const chartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: dates,
+                        datasets: [
+                            {
+                                label: 'Necessary Tests (AI)',
+                                data: necessaryTestsData.map(item => item.y),
+                                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                                borderColor: 'rgb(75, 192, 192)',
+                                borderWidth: 1,
+                                stack: 'stack1',
+                            },
+                            {
+                                label: 'Unnecessary Tests (AI)',
+                                data: unnecessaryTestsData.map(item => item.y),
+                                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                                borderColor: 'rgb(255, 99, 132)',
+                                borderWidth: 1,
+                                stack: 'stack1',
+                            },
+                            {
+                                label: 'Necessary Tests (Reviewed)',
+                                data: reviewedNecessaryTestsData.map(item => item.y),
+                                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                                borderColor: 'rgb(54, 162, 235)',
+                                borderWidth: 1,
+                                stack: 'stack2',
+                            },
+                            {
+                                label: 'Unnecessary Tests (Reviewed)',
+                                data: reviewedUnnecessaryTestsData.map(item => item.y),
+                                backgroundColor: 'rgba(255, 159, 64, 0.5)',
+                                borderColor: 'rgb(255, 159, 64)',
+                                borderWidth: 1,
+                                stack: 'stack2',
+                            },
+                        ],
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                stacked: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Tests',
+                                },
+                            },
+                            x: {
+                                stacked: true,
+                            },
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Daily Tests Distribution (Processed vs Reviewed)',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    afterBody: function (tooltipItems) {
+                                        const tooltipItem = tooltipItems[0];
+                                        const datasetIndex = tooltipItem.datasetIndex;
+                                        const displayedDate = tooltipItem.label; // Use the label from the chart's data
+                                        const originalIndex = dates.indexOf(displayedDate); // Find the original index of the displayed date
+
+                                        if (originalIndex === -1) return ''; // If no matching date, return nothing
+
+                                        const dataset = [
+                                            necessaryTestsData,
+                                            unnecessaryTestsData,
+                                            reviewedNecessaryTestsData,
+                                            reviewedUnnecessaryTestsData,
+                                        ][datasetIndex];
+                                        const tests = dataset[originalIndex]?.tests || [];
+
+                                        if (tests.length === 0) return '';
+
+                                        return '\nTests:\n- ' + tests.join('\n- ');
+                                    },
+                                },
+                            },
+                        },
+                    },
+                });
+
+                // Function to filter the chart based on selected dates
+                document.getElementById('dateSelector').addEventListener('change', () => {
+                    const selectedDates = Array.from(document.getElementById('dateSelector').selectedOptions).map(option => option.value);
+
+                    if (selectedDates.includes('all')) {
+                        chartInstance.data.labels = dates;
+                        chartInstance.data.datasets[0].data = necessaryTestsData.map(item => item.y);
+                        chartInstance.data.datasets[1].data = unnecessaryTestsData.map(item => item.y);
+                        chartInstance.data.datasets[2].data = reviewedNecessaryTestsData.map(item => item.y);
+                        chartInstance.data.datasets[3].data = reviewedUnnecessaryTestsData.map(item => item.y);
+                    } else {
+                        const filteredDates = [];
+                        const filteredNecessaryTests = [];
+                        const filteredUnnecessaryTests = [];
+                        const filteredReviewedNecessaryTests = [];
+                        const filteredReviewedUnnecessaryTests = [];
+
+                        selectedDates.forEach(date => {
+                            const index = dates.indexOf(date);
+                            if (index !== -1) {
+                                filteredDates.push(date);
+                                filteredNecessaryTests.push(necessaryTestsData[index].y);
+                                filteredUnnecessaryTests.push(unnecessaryTestsData[index].y);
+                                filteredReviewedNecessaryTests.push(reviewedNecessaryTestsData[index]?.y || 0);
+                                filteredReviewedUnnecessaryTests.push(reviewedUnnecessaryTestsData[index]?.y || 0);
+                            }
+                        });
+
+                        chartInstance.data.labels = filteredDates;
+                        chartInstance.data.datasets[0].data = filteredNecessaryTests;
+                        chartInstance.data.datasets[1].data = filteredUnnecessaryTests;
+                        chartInstance.data.datasets[2].data = filteredReviewedNecessaryTests;
+                        chartInstance.data.datasets[3].data = filteredReviewedUnnecessaryTests;
+                    }
+
+                    chartInstance.update();
+                });
+            }
+            else {
+                const ctx = document.getElementById('testsChart').getContext('2d');
+
+                const necessaryTestsData = dates.map((date, index) => ({
+                    x: date,
+                    y: necessaryTests[index].length,
+                    tests: necessaryTests[index]
+                }));
+
+                const unnecessaryTestsData = dates.map((date, index) => ({
+                    x: date,
+                    y: unnecessaryTests[index].length,
+                    tests: unnecessaryTests[index]
+                }));
+
+                testsChartInstance = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: dates,
+                        datasets: [
+                            {
+                                label: 'Necessary Tests',
+                                data: necessaryTestsData.map(item => item.y),
+                                backgroundColor: 'rgba(75, 192, 192, 0.5)',
+                                borderColor: 'rgb(75, 192, 192)',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Unnecessary Tests',
+                                data: unnecessaryTestsData.map(item => item.y),
+                                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                                borderColor: 'rgb(255, 99, 132)',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                stacked: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Tests'
+                                }
+                            },
+                            x: {
+                                stacked: true
+                            }
+                        },
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Daily Tests Distribution'
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+    </script>
+</body>
+
+</html>

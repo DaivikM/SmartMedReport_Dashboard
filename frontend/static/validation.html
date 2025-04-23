@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <header>
+        <div class="container">
+            <nav>
+                <ul>
+                    <li><a href="index.html">Home</a></li>
+                    <li><a href="validation.html" style="text-decoration: underline;">Validation</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+    <main>
+        <!-- New Full-Length Div for Photo -->
+        <div class="photo-container">
+            <h2><center>Comparison Report Loading...</center></h2>
+        </div>
+        <!-- Add a new dashboard element for displaying the fetched data -->
+        <div id="dashboard"></div>
+    </main>
+    <footer>
+
+    </footer>
+    <script>
+        window.onload = function () {
+            // Retrieve the stored API response from local storage
+            const storedResponse = localStorage.getItem('verify-stored');
+
+            if (storedResponse) {
+                try {
+                    const jsonData = JSON.parse(storedResponse); // Parse the stored JSON response
+
+                    // Create the HTML content for the response
+                    let content = `<h2>Policy Match</h2>
+                                <ul>
+                                    <li><strong>Medical Policy ID:</strong> ${jsonData.policy_match.medical_policy_id}</li>
+                                    <li><strong>Policy Doc ID:</strong> ${jsonData.policy_match.policy_doc_id}</li>
+                                    <li><strong>Matches:</strong> ${jsonData.policy_match.matches ? 'Yes' : 'No'}</li>
+                                </ul>`;
+
+                    content += `<h2>Claim Verification</h2>
+                                <ul>
+                                    <li><strong>Claim Amount:</strong> $${jsonData.claim_verification.claim_amount}</li>
+                                    <li><strong>Coverage Amount:</strong> $${jsonData.claim_verification.coverage_amount}</li>
+                                    <li><strong>Within Coverage:</strong> ${jsonData.claim_verification.within_coverage ? 'Yes' : 'No'}</li>
+                                    <li><strong>Coverage Percentage:</strong> ${jsonData.claim_verification.coverage_percentage}%</li>
+                                </ul>`;
+
+                    content += `<h2>Coverage Details</h2>
+                                <ul>
+                                    <li><strong>Matches:</strong> ${jsonData.coverage_details.matches ? 'Yes' : 'No'}</li>
+                                </ul>`;
+
+                    if (!jsonData.coverage_details.matches && jsonData.coverage_details.discrepancies.length > 0) {
+                        content += `<h3>Discrepancies:</h3><ul>`;
+                        jsonData.coverage_details.discrepancies.forEach(discrepancy => {
+                            content += `<li><strong>Item:</strong> ${discrepancy.item}</li>
+                                        <li><strong>Medical Doc:</strong> ${discrepancy.medical_doc}</li>
+                                        <li><strong>Policy Doc:</strong> ${discrepancy.policy_doc}</li><br>`;
+                        });
+                        content += `</ul>`;
+                    }
+
+                    // Display the content in the photo-container
+                    document.querySelector('.photo-container').innerHTML = content;
+                } catch (error) {
+                    console.error('Error parsing stored data:', error);
+                    document.querySelector('.photo-container').innerHTML =
+                        '<p class="error-message">Error loading data. Please check the stored response.</p>';
+                }
+            } else {
+                // Handle case where no data is found in local storage
+                document.querySelector('.photo-container').innerHTML =
+                    '<p class="error-message">No stored data found. Please upload and verify the files first.</p>';
+            }
+        };
+
+
+    </script>
+</body>
+
+</html>
