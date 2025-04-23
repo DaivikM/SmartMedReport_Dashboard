@@ -83,7 +83,7 @@ Please ensure **ports 8080 and 8081 are available** before running.
 
 ### 1. Clone the repository
 ```bash
-git clone https://github.com/DaivikM/SmartMedReport_Dashboard.git
+https://github.com/DaivikM/SmartMedReport_Dashboard.git
 cd SmartMedReport_Dashboard
 ```
 
